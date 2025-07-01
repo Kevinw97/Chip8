@@ -15,13 +15,13 @@ class Chip8
 	unsigned short stack[16];
 	unsigned short sp;
 
-	unsigned char keys[16];
-
 	void reset();
 
 public:
 	unsigned char graphics[64 * 32]; // Width * Height : 64 * 32
 	unsigned char render_flag;
+
+	unsigned char keys[16];
 
 	Chip8();
 	~Chip8();

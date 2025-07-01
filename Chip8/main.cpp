@@ -5,6 +5,25 @@
 
 using namespace std;
 
+unsigned char key_map[16] = {
+	SDLK_X, // 0
+	SDLK_1, // 1
+	SDLK_2, // 2
+	SDLK_3, // 3
+	SDLK_Q, // 4
+	SDLK_W, // 5
+	SDLK_E, // 6
+	SDLK_A, // 7
+	SDLK_S, // 8
+	SDLK_D, // 9
+	SDLK_Z, // A
+	SDLK_C, // B
+	SDLK_4, // C
+	SDLK_R, // D
+	SDLK_F, // E
+	SDLK_V  // F
+};
+
 int main(int argc, char **argv)
 {
 	// Command usage, should take ROM file name
@@ -40,11 +59,53 @@ int main(int argc, char **argv)
 		32);
 	SDL_SetTextureScaleMode(sdl_texture, SDL_SCALEMODE_NEAREST);
 
+	SDL_Event sdl_event;
+
 	chip8.load(argv[1]);
 
 	while (true)
 	{
+		// Process key events
+		while (SDL_PollEvent(&sdl_event))
+		{
+			if (sdl_event.type == SDL_EVENT_QUIT)
+			{
+				return 0;
+			}
+			if (sdl_event.type == SDL_EVENT_KEY_DOWN)
+			{
+				if (sdl_event.key.key == SDLK_F5) // Reset
+				{
+					chip8.load(argv[1]);
+					break;
+				}
+				for (int i = 0; i < 16; i++)
+				{
+					if (sdl_event.key.key == key_map[i])
+					{
+						chip8.keys[i] = 1;
+					}
+				}
+				
+			}
+			if (sdl_event.type == SDL_EVENT_KEY_DOWN)
+			{
+				for (int i = 0; i < 16; i++)
+				{
+					if (sdl_event.key.key == key_map[i])
+					{
+						chip8.keys[i] = 0;
+					}
+				}
+			}
+		}
+
+		// Run single CPU cycle
 		chip8.emulate_cycle();
+
+		SDL_Delay(10);
+
+		// Re-render if needed
 		if (chip8.render_flag)
 		{
 			chip8.render_flag = 0;
@@ -54,8 +115,6 @@ int main(int argc, char **argv)
 			SDL_RenderPresent(renderer);
 		}
 	}
-
-	SDL_Delay(10000);
 
 	return 0;
 }
