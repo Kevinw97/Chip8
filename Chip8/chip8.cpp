@@ -39,6 +39,7 @@ void Chip8::reset()
 	memset(V, 0, sizeof(V));
 	memset(stack, 0, sizeof(stack));
 	memset(keys, 0, sizeof(keys));
+	memset(graphics, 0, sizeof(graphics));
 
 	I = 0;
 	pc = 0x200;
@@ -62,7 +63,7 @@ int Chip8::load(const char* file_path)
 	}
 
 	file.seekg(0, std::ios::beg);
-	if (!file.read(reinterpret_cast<char*>(this->memory), size))
+	if (!file.read(reinterpret_cast<char*>(this->memory) + 0x200, size))
 	{
 		std::cout << "Failed to read file into memory!" << std::endl;
 		return -1;
@@ -74,6 +75,7 @@ int Chip8::load(const char* file_path)
 void Chip8::emulate_cycle()
 {
 	unsigned short opcode = memory[pc] << 8 | memory[pc + 1];
+	std::cout << std::hex << opcode << std::endl;
 	switch (opcode & 0xF000)
 	{
 		case 0x0000:
@@ -83,7 +85,7 @@ void Chip8::emulate_cycle()
 				case 0x00E0: // 00E0 - CLS
 				{
 					memset(graphics, 0, sizeof(graphics));
-					draw_flag = 1;
+					render_flag = 1;
 					pc += 2;
 					break;
 				}
@@ -111,7 +113,7 @@ void Chip8::emulate_cycle()
 		{
 			stack[sp] = pc;
 			sp++;
-			pc = 0x0FFF;
+			pc = opcode & 0x0FFF;
 			break;
 		}
 		case 0x3000: // 3xkk - SE Vx, byte
@@ -172,10 +174,10 @@ void Chip8::emulate_cycle()
 		}
 		case 0x8000:
 		{
+			unsigned char x = (0x0F00 & opcode) >> 8;
+			unsigned char y = (0x00F0 & opcode) >> 4;
 			switch (opcode & 0x000F)
 			{
-				unsigned char x = (0x0F00 & opcode) >> 8;
-				unsigned char y = (0x00F0 & opcode) >> 4;
 				case 0x0000: // 8xy0 - LD Vx, Vy
 				{
 					V[x] = V[y];
@@ -321,18 +323,130 @@ void Chip8::emulate_cycle()
 						{
 							V[0xF] = 1;
 						}
-						graphics[((y_coord + y_pixel) % 32) * 64 + ((x_coord + x_pixel) % 64)] ^= 1;
+						graphics[((y_coord + y_pixel) % 32) * 64 + ((x_coord + x_pixel) % 64)] ^= 0xFF;
 					}
 				}
 			}
 
-			draw_flag = 1;
+			render_flag = 1;
 
 			pc += 2;
 			break;
 		}
 		case 0xE000:
 		{
+			unsigned char x = (0x0F00 & opcode) >> 8;
+			switch (opcode & 0x00FF)
+			{
+				case 0x009E: // Ex9E - SKP Vx
+				{
+					if (keys[V[x]])
+					{
+						pc += 4;
+					}
+					else
+					{
+						pc += 2;
+					}
+					break;
+				}
+				case 0x00A1: // ExA1 - SKNP Vx
+				{
+					if (!keys[V[x]])
+					{
+						pc += 4;
+					}
+					else
+					{
+						pc += 2;
+					}
+					break;
+				}
+			}
+			break;
+		}
+		case 0xF000:
+		{
+			unsigned char x = (0x0F00 & opcode) >> 8;
+			switch (opcode & 0x00FF)
+			{
+				case 0x0007: // Fx07 - LD Vx, DT
+				{
+					V[x] = delay_timer;
+					pc += 2;
+					break;
+				}
+				case 0x000A: // Fx0A - LD Vx, K
+				{
+					bool key_pressed = false;
+					for (unsigned char i = 0; i < 16; i++)
+					{
+						if (keys[i])
+						{
+							V[x] = i;
+							key_pressed = true;
+						}
+					}
+					if (!key_pressed)
+					{
+						return;
+					}
+					pc += 2;
+					break;
+				}
+				case 0x0015: // Fx15 - LD DT, Vx
+				{
+					delay_timer = V[x];
+					pc += 2;
+					break;
+				}
+				case 0x0018: // Fx18 - LD ST, Vx
+				{
+					sound_timer = V[x];
+					pc += 2;
+					break;
+				}
+				case 0x001E: // Fx1E - ADD I, Vx
+				{
+					I += V[x];
+					pc += 2;
+					break;
+				}
+				case 0x0029: // Fx29 - LD F, Vx
+				{
+					I = 0x50 + (V[x] * 5);
+					pc += 2;
+					break;
+				}
+				case 0x0033: // Fx33 - LD B, Vx
+				{
+					memory[I] = (V[x] / 100);
+					memory[I + 1] = (V[x] / 10) % 10;
+					memory[I + 2] = V[x] % 10;
+					pc += 2;
+					break;
+				}
+				case 0x0055: // Fx55 - LD [I], Vx
+				{
+					for (unsigned char i = 0; i <= x; i++)
+					{
+						memory[I] = V[i];
+						I++;
+					}
+					pc += 2;
+					break;
+				}
+				case 0x0065: // Fx65 - LD Vx, [I]
+				{
+					for (unsigned char i = 0; i <= x; i++)
+					{
+						V[i] = memory[I];
+						I++;
+					}
+					pc += 2;
+					break;
+				}
+			}
 			break;
 		}
 	}

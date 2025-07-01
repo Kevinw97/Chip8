@@ -21,7 +21,7 @@ class Chip8
 
 public:
 	unsigned char graphics[64 * 32]; // Width * Height : 64 * 32
-	unsigned char draw_flag;
+	unsigned char render_flag;
 
 	Chip8();
 	~Chip8();
