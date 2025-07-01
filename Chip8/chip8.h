@@ -15,7 +15,7 @@ class Chip8
 	unsigned short stack[16];
 	unsigned short sp;
 
-	void init();
+	void reset();
 
 public:
 	unsigned char graphics[64 * 32];
@@ -24,7 +24,7 @@ public:
 	~Chip8();
 
 	void emulate_cycle();
-	void load(const char* file_path);
+	int load(const char* file_path);
 };
 
 #endif // CHIP8_H
