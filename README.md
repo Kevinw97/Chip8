@@ -1,6 +1,7 @@
 # Chip8 emulator
 
 Chip8 emulator project written in C++ to learn about emulation. Uses SDL3.
+
 TODO: Finish processing inputs and sound
 
 ## How to build and run:
