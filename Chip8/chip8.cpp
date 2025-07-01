@@ -1,6 +1,7 @@
 #include "chip8.h"
 #include <iostream>
 #include <fstream>
+#include <random>
 
 unsigned char chip8_fontset[80] =
 {
@@ -37,6 +38,7 @@ void Chip8::reset()
 	memset(memory, 0, sizeof(memory));
 	memset(V, 0, sizeof(V));
 	memset(stack, 0, sizeof(stack));
+	memset(keys, 0, sizeof(keys));
 
 	I = 0;
 	pc = 0x200;
@@ -74,6 +76,32 @@ void Chip8::emulate_cycle()
 	unsigned short opcode = memory[pc] << 8 | memory[pc + 1];
 	switch (opcode & 0xF000)
 	{
+		case 0x0000:
+		{
+			switch (opcode & 0x0FFF)
+			{
+				case 0x00E0: // 00E0 - CLS
+				{
+					memset(graphics, 0, sizeof(graphics));
+					draw_flag = 1;
+					pc += 2;
+					break;
+				}
+				case 0x00EE: // 00EE - RET
+				{
+					sp--;
+					pc = stack[sp];
+					pc += 2;
+					break;
+				}
+				default: // 0nnn - SYS addr
+				{
+					pc = opcode & 0x0FFF;
+					break;
+				}
+			}
+			break;
+		}
 		case 0x1000: // 1nnn - JP addr
 		{
 			pc = opcode & 0x0FFF;
@@ -151,18 +179,22 @@ void Chip8::emulate_cycle()
 				case 0x0000: // 8xy0 - LD Vx, Vy
 				{
 					V[x] = V[y];
+					break;
 				}
 				case 0x0001: // 8xy1 - OR Vx, Vy
 				{
 					V[x] = V[x] | V[y];
+					break;
 				}
 				case 0x0002: // 8xy2 - AND Vx, Vy
 				{
 					V[x] = V[x] & V[y];
+					break;
 				}
 				case 0x0003: // 8xy3 - XOR Vx, Vy
 				{
 					V[x] = V[x] ^ V[y];
+					break;
 				}
 				case 0x0004: // 8xy4 - ADD Vx, Vy
 				{
@@ -175,6 +207,7 @@ void Chip8::emulate_cycle()
 					{
 						V[0xF] = 0;
 					}
+					break;
 				}
 				case 0x0005: // 8xy5 - SUB Vx, Vy
 				{
@@ -186,6 +219,7 @@ void Chip8::emulate_cycle()
 						V[0xF] = 0;
 					}
 					V[x] -= V[y];
+					break;
 				}
 				case 0x0006: // 8xy6 - SHR Vx {, Vy}
 				{
@@ -198,6 +232,7 @@ void Chip8::emulate_cycle()
 						V[0xF] = 0;
 					}
 					V[x] >>= 1;
+					break;
 				}
 				case 0x0007: // 8xy7 - SUBN Vx, Vy
 				{
@@ -210,6 +245,7 @@ void Chip8::emulate_cycle()
 						V[0xF] = 0;
 					}
 					V[x] = V[y] - V[x];
+					break;
 				}
 				case 0x000E: // 8xyE - SHL Vx {, Vy}
 				{
@@ -222,6 +258,7 @@ void Chip8::emulate_cycle()
 						V[0xF] = 0;
 					}
 					V[x] <<= 1;
+					break;
 				}
 			}
 			pc += 2;
@@ -239,6 +276,64 @@ void Chip8::emulate_cycle()
 			{
 				pc += 2;
 			}
+			break;
+		}
+		case 0xA000: // Annn - LD I, addr
+		{
+			I = opcode & 0x0FFF;
+			pc += 2;
+			break;
+		}
+		case 0xB000: // Bnnn - JP V0, addr
+		{
+			pc = (opcode & 0x0FFF) + V[0];
+			pc += 2;
+			break;
+		}
+		case 0xC000: // Cxkk - RND Vx, byte
+		{
+			unsigned char x = (0x0F00 & opcode) >> 8;
+			unsigned char val = (opcode & 0x00FF);
+			unsigned char random_byte = rand() % 0x100;
+			V[x] = random_byte & val;
+			pc += 2;
+			break;
+		}
+		case 0xD000: // Dxyn - DRW Vx, Vy, nibble
+		{
+			unsigned char n = opcode & 0x000F;
+			unsigned char x = (0x0F00 & opcode) >> 8;
+			unsigned char y = (0x00F0 & opcode) >> 4;
+
+			unsigned char x_coord = V[x];
+			unsigned char y_coord = V[y];
+
+			V[0xF] = 0;
+
+			for (int y_pixel = 0; y_pixel < n; y_pixel++)
+			{
+				unsigned char sprite_row = memory[I + y_pixel];
+				for (int x_pixel = 0; x_pixel < 8; x_pixel++)
+				{
+					if (sprite_row & (0x80 >> x_pixel)) // Pixel on sprite is set
+					{
+						if (graphics[((y_coord + y_pixel) % 32) * 64 + ((x_coord + x_pixel) % 64)]) // Pixel on display is set
+						{
+							V[0xF] = 1;
+						}
+						graphics[((y_coord + y_pixel) % 32) * 64 + ((x_coord + x_pixel) % 64)] ^= 1;
+					}
+				}
+			}
+
+			draw_flag = 1;
+
+			pc += 2;
+			break;
+		}
+		case 0xE000:
+		{
+			break;
 		}
 	}
 }
