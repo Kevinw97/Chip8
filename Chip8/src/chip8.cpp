@@ -1,4 +1,4 @@
-#include "chip8.h"
+#include "chip8.hpp"
 #include <iostream>
 #include <fstream>
 #include <random>
@@ -25,11 +25,7 @@ unsigned char chip8_fontset[80] =
 
 Chip8::Chip8()
 {
-  // Reset everything in the emulator
   this->reset();
-
-  // Load fontset in memory
-  memcpy_s(this->memory + 0x50, sizeof(this->memory) - 0x50, chip8_fontset, sizeof(chip8_fontset));
 }
 Chip8::~Chip8() {}
 
@@ -48,6 +44,10 @@ void Chip8::reset()
 
   delay_timer = 0;
   sound_timer = 0;
+
+  // Load fontset in memory
+  memcpy_s(this->memory + 0x50, sizeof(this->memory) - 0x50, chip8_fontset, sizeof(chip8_fontset));
+
   return;
 }
 
@@ -59,7 +59,7 @@ int Chip8::load(const char* file_path)
 
   if (size > sizeof(this->memory) - 0x200)
   {
-    std::cout << "ROM too big to fit in memory!" << std::endl;
+    std::cout << "ROM too big to fit in memory, or does not exist." << std::endl;
     return -1;
   }
 

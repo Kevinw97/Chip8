@@ -21,7 +21,7 @@ class Chip8
 
 public:
   unsigned char graphics[64 * 32]; // Width * Height : 64 * 32
-  unsigned char render_flag;
+  unsigned char render_flag; // Currently not used since display constantly renders at 60 Hz
 
   unsigned char keys[16];
 

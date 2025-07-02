@@ -1,7 +1,8 @@
 #include <SDL3/SDL.h>
 #include <iostream>
+#include <chrono>
 
-#include "chip8.h"
+#include "chip8.hpp"
 
 using namespace std;
 
@@ -63,6 +64,12 @@ int main(int argc, char** argv)
 
   chip8.load(argv[1]);
 
+  static const auto cpu_rate = chrono::nanoseconds{ 1000000000 / 540 };
+  static const auto display_rate = chrono::nanoseconds{ 1000000000 / 60 };
+
+  auto display_clock_begin = chrono::steady_clock::now();
+  auto cpu_clock_begin = chrono::steady_clock::now();
+
   while (true)
   {
     // Process key events
@@ -101,15 +108,23 @@ int main(int argc, char** argv)
       }
     }
 
-    // Run single CPU cycle
-    chip8.emulate_cycle();
-
-    SDL_Delay(1);
-
-    // Re-render if needed
-    if (true || chip8.render_flag)
+    // Run single CPU cycle at CPU rate
+    auto cpu_clock_end = chrono::steady_clock::now();
+    if (cpu_clock_end - cpu_clock_begin >= cpu_rate)
     {
-      chip8.render_flag = 0;
+      cpu_clock_begin = cpu_clock_end;
+      chip8.emulate_cycle();
+    }
+    
+    // Re-render display at display rate
+    auto display_clock_end = chrono::steady_clock::now();
+    if (display_clock_end - display_clock_begin >= display_rate)
+    {
+      display_clock_begin = display_clock_end;
+      if (chip8.render_flag)
+      {
+        chip8.render_flag = 0;
+      }
 
       SDL_UpdateTexture(sdl_texture, NULL, chip8.graphics, 64);
       SDL_RenderTexture(renderer, sdl_texture, NULL, NULL);
