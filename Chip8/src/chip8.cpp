@@ -76,6 +76,10 @@ int Chip8::load(const char* file_path)
 void Chip8::emulate_cycle()
 {
   unsigned short opcode = memory[pc] << 8 | memory[pc + 1];
+  unsigned char x = (0x0F00 & opcode) >> 8;
+  unsigned char y = (0x00F0 & opcode) >> 4;
+  unsigned char val = opcode & 0x00FF;
+  pc += 2;
   // std::cout << std::hex << opcode << std::endl;
   switch (opcode & 0xF000)
   {
@@ -87,14 +91,12 @@ void Chip8::emulate_cycle()
     {
       memset(graphics, 0, sizeof(graphics));
       render_flag = 1;
-      pc += 2;
       break;
     }
     case 0x00EE: // 00EE - RET
     {
       sp--;
       pc = stack[sp];
-      pc += 2;
       break;
     }
     default: // 0nnn - SYS addr
@@ -119,13 +121,7 @@ void Chip8::emulate_cycle()
   }
   case 0x3000: // 3xkk - SE Vx, byte
   {
-    unsigned char x = (0x0F00 & opcode) >> 8;
-    unsigned char val = opcode & 0x00FF;
     if (V[x] == val)
-    {
-      pc += 4;
-    }
-    else
     {
       pc += 2;
     }
@@ -133,13 +129,7 @@ void Chip8::emulate_cycle()
   }
   case 0x4000: // 4xkk - SNE Vx, byte
   {
-    unsigned char x = (0x0F00 & opcode) >> 8;
-    unsigned char val = opcode & 0x00FF;
     if (V[x] != val)
-    {
-      pc += 4;
-    }
-    else
     {
       pc += 2;
     }
@@ -147,13 +137,7 @@ void Chip8::emulate_cycle()
   }
   case 0x5000: // 5xy0 - SE Vx, Vy
   {
-    unsigned char x = (0x0F00 & opcode) >> 8;
-    unsigned char y = (0x00F0 & opcode) >> 4;
     if (V[x] == V[y])
-    {
-      pc += 4;
-    }
-    else
     {
       pc += 2;
     }
@@ -161,115 +145,100 @@ void Chip8::emulate_cycle()
   }
   case 0x6000: // 6xkk - LD Vx, byte
   {
-    unsigned char x = (0x0F00 & opcode) >> 8;
-    unsigned char val = 0x00FF & opcode;
     V[x] = val;
-    pc += 2;
     break;
   }
   case 0x7000: // 7xkk - ADD Vx, byte
   {
-    unsigned char x = (0x0F00 & opcode) >> 8;
-    unsigned char val = 0x00FF & opcode;
     V[x] += val;
-    pc += 2;
     break;
   }
   case 0x8000:
   {
-    unsigned char x = (0x0F00 & opcode) >> 8;
-    unsigned char y = (0x00F0 & opcode) >> 4;
     switch (opcode & 0x000F)
     {
-    case 0x0000: // 8xy0 - LD Vx, Vy
-    {
-      V[x] = V[y];
-      break;
-    }
-    case 0x0001: // 8xy1 - OR Vx, Vy
-    {
-      V[x] = V[x] | V[y];
-      break;
-    }
-    case 0x0002: // 8xy2 - AND Vx, Vy
-    {
-      V[x] = V[x] & V[y];
-      break;
-    }
-    case 0x0003: // 8xy3 - XOR Vx, Vy
-    {
-      V[x] = V[x] ^ V[y];
-      break;
-    }
-    case 0x0004: // 8xy4 - ADD Vx, Vy
-    {
-      V[x] += V[y];
-      if (V[x] < V[y]) // Set V[0xF] if overflow occurred
+      case 0x0000: // 8xy0 - LD Vx, Vy
       {
-        V[0xF] = 1;
+        V[x] = V[y];
+        break;
       }
-      else
+      case 0x0001: // 8xy1 - OR Vx, Vy
       {
-        V[0xF] = 0;
+        V[x] = V[x] | V[y];
+        break;
       }
-      break;
-    }
-    case 0x0005: // 8xy5 - SUB Vx, Vy
-    {
-      unsigned char val_x = V[x];
-      unsigned char val_y = V[y];
-      V[x] -= V[y];
-      if (val_x >= val_y) {
-        V[0xF] = 1;
-      }
-      else
+      case 0x0002: // 8xy2 - AND Vx, Vy
       {
-        V[0xF] = 0;
+        V[x] = V[x] & V[y];
+        break;
       }
-      break;
-    }
-    case 0x0006: // 8xy6 - SHR Vx {, Vy}
-    {
-      unsigned char carry = V[x] & 0x0001;
-      V[x] >>= 1;
-      V[0xF] = carry;
-      break;
-    }
-    case 0x0007: // 8xy7 - SUBN Vx, Vy
-    {
-      unsigned char val_y = V[y];
-      unsigned char val_x = V[x];
-      V[x] = V[y] - V[x];
-      if (val_y >= val_x)
+      case 0x0003: // 8xy3 - XOR Vx, Vy
       {
-        V[0xF] = 1;
+        V[x] = V[x] ^ V[y];
+        break;
       }
-      else
+      case 0x0004: // 8xy4 - ADD Vx, Vy
       {
-        V[0xF] = 0;
+        V[x] += V[y];
+        if (V[x] <= V[y]) // Set V[0xF] if overflow occurred
+        {
+          V[0xF] = 1;
+        }
+        else
+        {
+          V[0xF] = 0;
+        }
+        break;
       }
-      break;
+      case 0x0005: // 8xy5 - SUB Vx, Vy
+      {
+        unsigned char val_x = V[x];
+        unsigned char val_y = V[y];
+        V[x] -= V[y];
+        if (val_x >= val_y) {
+          V[0xF] = 1;
+        }
+        else
+        {
+          V[0xF] = 0;
+        }
+        break;
+      }
+      case 0x0006: // 8xy6 - SHR Vx {, Vy}
+      {
+        unsigned char carry = V[x] & 0x0001;
+        V[x] >>= 1;
+        V[0xF] = carry;
+        break;
+      }
+      case 0x0007: // 8xy7 - SUBN Vx, Vy
+      {
+        unsigned char val_y = V[y];
+        unsigned char val_x = V[x];
+        V[x] = V[y] - V[x];
+        if (val_y >= val_x)
+        {
+          V[0xF] = 1;
+        }
+        else
+        {
+          V[0xF] = 0;
+        }
+        break;
+      }
+      case 0x000E: // 8xyE - SHL Vx {, Vy}
+      {
+        unsigned char carry = (V[x] & 0x80) >> 7;
+        V[x] <<= 1;
+        V[0xF] = carry;
+        break;
+      }
     }
-    case 0x000E: // 8xyE - SHL Vx {, Vy}
-    {
-      unsigned char carry = (V[x] & 0x80) >> 7;
-      V[x] <<= 1;
-      V[0xF] = carry;
-      break;
-    }
-    }
-    pc += 2;
     break;
   }
   case 0x9000: // 9xy0 - SNE Vx, Vy
   {
-    unsigned char x = (0x0F00 & opcode) >> 8;
-    unsigned char y = (0x00F0 & opcode) >> 4;
     if (V[x] != V[y])
-    {
-      pc += 4;
-    }
-    else
     {
       pc += 2;
     }
@@ -278,29 +247,22 @@ void Chip8::emulate_cycle()
   case 0xA000: // Annn - LD I, addr
   {
     I = opcode & 0x0FFF;
-    pc += 2;
     break;
   }
   case 0xB000: // Bnnn - JP V0, addr
   {
     pc = (opcode & 0x0FFF) + V[0];
-    pc += 2;
     break;
   }
   case 0xC000: // Cxkk - RND Vx, byte
   {
-    unsigned char x = (0x0F00 & opcode) >> 8;
-    unsigned char val = (opcode & 0x00FF);
     unsigned char random_byte = rand() % 0x100;
     V[x] = random_byte & val;
-    pc += 2;
     break;
   }
   case 0xD000: // Dxyn - DRW Vx, Vy, nibble
   {
     unsigned char n = opcode & 0x000F;
-    unsigned char x = (0x0F00 & opcode) >> 8;
-    unsigned char y = (0x00F0 & opcode) >> 4;
 
     unsigned char x_coord = V[x];
     unsigned char y_coord = V[y];
@@ -325,21 +287,15 @@ void Chip8::emulate_cycle()
 
     render_flag = 1;
 
-    pc += 2;
     break;
   }
   case 0xE000:
   {
-    unsigned char x = (0x0F00 & opcode) >> 8;
     switch (opcode & 0x00FF)
     {
     case 0x009E: // Ex9E - SKP Vx
     {
       if (keys[V[x]])
-      {
-        pc += 4;
-      }
-      else
       {
         pc += 2;
       }
@@ -348,10 +304,6 @@ void Chip8::emulate_cycle()
     case 0x00A1: // ExA1 - SKNP Vx
     {
       if (!keys[V[x]])
-      {
-        pc += 4;
-      }
-      else
       {
         pc += 2;
       }
@@ -362,42 +314,37 @@ void Chip8::emulate_cycle()
   }
   case 0xF000:
   {
-    unsigned char x = (0x0F00 & opcode) >> 8;
     switch (opcode & 0x00FF)
     {
     case 0x0007: // Fx07 - LD Vx, DT
     {
       V[x] = delay_timer;
-      pc += 2;
       break;
     }
     case 0x000A: // Fx0A - LD Vx, K
     {
       waiting_for_key = x;
+      pc -= 2;
       break;
     }
     case 0x0015: // Fx15 - LD DT, Vx
     {
       delay_timer = V[x];
-      pc += 2;
       break;
     }
     case 0x0018: // Fx18 - LD ST, Vx
     {
       sound_timer = V[x];
-      pc += 2;
       break;
     }
     case 0x001E: // Fx1E - ADD I, Vx
     {
       I += V[x];
-      pc += 2;
       break;
     }
     case 0x0029: // Fx29 - LD F, Vx
     {
       I = 0x50 + (V[x] * 5);
-      pc += 2;
       break;
     }
     case 0x0033: // Fx33 - LD B, Vx
@@ -405,7 +352,6 @@ void Chip8::emulate_cycle()
       memory[I] = (V[x] / 100);
       memory[I + 1] = (V[x] / 10) % 10;
       memory[I + 2] = V[x] % 10;
-      pc += 2;
       break;
     }
     case 0x0055: // Fx55 - LD [I], Vx
@@ -415,7 +361,6 @@ void Chip8::emulate_cycle()
         memory[I] = V[i];
         I++;
       }
-      pc += 2;
       break;
     }
     case 0x0065: // Fx65 - LD Vx, [I]
@@ -425,7 +370,6 @@ void Chip8::emulate_cycle()
         V[i] = memory[I];
         I++;
       }
-      pc += 2;
       break;
     }
     }
