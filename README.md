@@ -7,4 +7,4 @@ TODO: Decrement the timers at 60 Hz while maintaining CPU cycle speed and implem
 ## How to build and run:
 This is a Visual Studio project. Install SDL3 from https://github.com/libsdl-org/SDL/releases with the VC devel package and follow the install.md there.
 
-Run the executable with: chip8 <path to Chip8 ROM file>
+Run the executable with: chip8 {path to Chip8 rom file}
