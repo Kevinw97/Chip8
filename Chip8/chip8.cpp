@@ -383,7 +383,7 @@ void Chip8::emulate_cycle()
 					}
 					if (!key_pressed)
 					{
-						return;
+						break;
 					}
 					pc += 2;
 					break;
