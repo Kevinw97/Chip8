@@ -93,7 +93,6 @@ int main(int argc, char** argv)
             chip8.keys[i] = 1;
           }
         }
-
       }
       if (sdl_event.type == SDL_EVENT_KEY_UP)
       {
@@ -102,7 +101,6 @@ int main(int argc, char** argv)
           if (sdl_event.key.key == key_map[i])
           {
             chip8.keys[i] = 0;
-            chip8.key_up_fx0a(i);
           }
         }
       }

@@ -15,8 +15,6 @@ class Chip8
   unsigned short stack[16];
   unsigned short sp;
 
-  unsigned char waiting_for_key; // 0xFF when not set, otherwise used to store which register to load key into
-
   void reset();
 
 public:
@@ -30,7 +28,6 @@ public:
 
   int load(const char* file_path);
   void emulate_cycle();
-  void key_up_fx0a(unsigned char key);
 
 };
 

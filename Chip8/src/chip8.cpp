@@ -25,7 +25,7 @@ unsigned char chip8_fontset[80] =
 
 Chip8::Chip8()
 {
-  this->reset();
+  reset();
 }
 Chip8::~Chip8() {}
 
@@ -40,13 +40,12 @@ void Chip8::reset()
   I = 0;
   pc = 0x200;
   sp = 0;
-  waiting_for_key = false;
 
   delay_timer = 0;
   sound_timer = 0;
 
   // Load fontset in memory
-  memcpy_s(this->memory + 0x50, sizeof(this->memory) - 0x50, chip8_fontset, sizeof(chip8_fontset));
+  memcpy_s(memory + 0x50, sizeof(memory) - 0x50, chip8_fontset, sizeof(chip8_fontset));
 
   return;
 }
@@ -57,14 +56,14 @@ int Chip8::load(const char* file_path)
   std::ifstream file(file_path, std::ios::binary | std::ios::ate);
   std::streamsize size = file.tellg();
 
-  if (size > sizeof(this->memory) - 0x200)
+  if (size > sizeof(memory) - 0x200)
   {
     std::cout << "ROM too big to fit in memory, or does not exist." << std::endl;
     return -1;
   }
 
   file.seekg(0, std::ios::beg);
-  if (!file.read(reinterpret_cast<char*>(this->memory) + 0x200, size))
+  if (!file.read(reinterpret_cast<char*>(memory) + 0x200, size))
   {
     std::cout << "Failed to read file into memory!" << std::endl;
     return -1;
@@ -99,9 +98,9 @@ void Chip8::emulate_cycle()
       pc = stack[sp];
       break;
     }
-    default: // 0nnn - SYS addr
+    default: // 0nnn - SYS addr (unimplemented)
     {
-      pc = opcode & 0x0FFF;
+      // pc = opcode & 0x0FFF;
       break;
     }
     }
@@ -164,66 +163,44 @@ void Chip8::emulate_cycle()
       }
       case 0x0001: // 8xy1 - OR Vx, Vy
       {
-        V[x] = V[x] | V[y];
+        V[x] |= V[y];
         break;
       }
       case 0x0002: // 8xy2 - AND Vx, Vy
       {
-        V[x] = V[x] & V[y];
+        V[x] &= V[y];
         break;
       }
       case 0x0003: // 8xy3 - XOR Vx, Vy
       {
-        V[x] = V[x] ^ V[y];
+        V[x] ^= V[y];
         break;
       }
       case 0x0004: // 8xy4 - ADD Vx, Vy
       {
         V[x] += V[y];
-        if (V[x] <= V[y]) // Set V[0xF] if overflow occurred
-        {
-          V[0xF] = 1;
-        }
-        else
-        {
-          V[0xF] = 0;
-        }
+        V[0xF] = (V[x] < V[y]) ? 1 : 0; // Set V[0xF] if overflow occurred
         break;
       }
       case 0x0005: // 8xy5 - SUB Vx, Vy
       {
-        unsigned char val_x = V[x];
-        unsigned char val_y = V[y];
+        bool carry = V[x] >= V[y];
         V[x] -= V[y];
-        if (val_x >= val_y) {
-          V[0xF] = 1;
-        }
-        else
-        {
-          V[0xF] = 0;
-        }
+        V[0xF] = carry;
         break;
       }
       case 0x0006: // 8xy6 - SHR Vx {, Vy}
       {
-        unsigned char carry = V[x] & 0x0001;
+        bool carry = V[x] & 0x0001;
         V[x] >>= 1;
         V[0xF] = carry;
         break;
       }
       case 0x0007: // 8xy7 - SUBN Vx, Vy
       {
-        unsigned char val_y = V[y];
-        unsigned char val_x = V[x];
+        bool carry = V[y] >= V[x];
         V[x] = V[y] - V[x];
-        if (val_y >= val_x)
-        {
-          V[0xF] = 1;
-        }
-        else
-        {
-          V[0xF] = 0;
-        }
+        V[0xF] = carry;
         break;
       }
       case 0x000E: // 8xyE - SHL Vx {, Vy}
@@ -323,7 +300,29 @@ void Chip8::emulate_cycle()
     }
     case 0x000A: // Fx0A - LD Vx, K
     {
-      waiting_for_key = x;
+      static bool key_pressed = false;
+      static unsigned char key = 0xFF;
+      if (!key_pressed)
+      {
+        for (int i = 0; i < 16; i++)
+        {
+          if (keys[i]) // Key is held down, save it, and wait until it is released
+          {
+            key_pressed = true;
+            key = i;
+          }
+        }
+      }
+      else
+      {
+        if (!keys[key]) // Key is released, we can stop waiting and save the key
+        {
+          V[x] = key;
+          key_pressed = false;
+          key = 0xFF;
+          pc += 2;
+        }
+      }
       pc -= 2;
       break;
     }
@@ -385,16 +384,5 @@ void Chip8::emulate_cycle()
     sound_timer--;
   }
 
-  return;
-}
-
-void Chip8::key_up_fx0a(unsigned char key)
-{
-  if (waiting_for_key != 0xFF)
-  {
-    V[waiting_for_key] = key;
-    pc += 2;
-    waiting_for_key = 0xFF;
-  }
   return;
 }
