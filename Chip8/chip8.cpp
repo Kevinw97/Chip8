@@ -171,6 +171,8 @@ void Chip8::emulate_cycle()
 			unsigned char x = (0x0F00 & opcode) >> 8;
 			unsigned char val = 0x00FF & opcode;
 			V[x] += val;
+			pc += 2;
+			break;
 		}
 		case 0x8000:
 		{
@@ -213,32 +215,31 @@ void Chip8::emulate_cycle()
 				}
 				case 0x0005: // 8xy5 - SUB Vx, Vy
 				{
-					if (V[x] > V[y]) {
+					unsigned char val_x = V[x];
+					unsigned char val_y = V[y];
+					V[x] -= V[y];
+					if (val_x >= val_y) {
 						V[0xF] = 1;
 					}
 					else
 					{
 						V[0xF] = 0;
 					}
-					V[x] -= V[y];
 					break;
 				}
 				case 0x0006: // 8xy6 - SHR Vx {, Vy}
 				{
-					if (V[x] & 0x0001)
-					{
-						V[0xF] = 1;
-					}
-					else
-					{
-						V[0xF] = 0;
-					}
+					unsigned char carry = !!(V[x] & 0x0001);
 					V[x] >>= 1;
+					V[0xF] = carry;
 					break;
 				}
 				case 0x0007: // 8xy7 - SUBN Vx, Vy
 				{
-					if (V[y] > V[x])
+					unsigned char val_y = V[y];
+					unsigned char val_x = V[x];
+					V[x] = V[y] - V[x];
+					if (val_y >= val_x)
 					{
 						V[0xF] = 1;
 					}
@@ -246,20 +247,13 @@ void Chip8::emulate_cycle()
 					{
 						V[0xF] = 0;
 					}
-					V[x] = V[y] - V[x];
 					break;
 				}
 				case 0x000E: // 8xyE - SHL Vx {, Vy}
 				{
-					if (V[x] & 0x80)
-					{
-						V[0xF] = 1;
-					}
-					else
-					{
-						V[0xF] = 0;
-					}
+					unsigned char carry = !!(V[x] & 0x80);
 					V[x] <<= 1;
+					V[0xF] = carry;
 					break;
 				}
 			}
@@ -450,4 +444,14 @@ void Chip8::emulate_cycle()
 			break;
 		}
 	}
+	if (delay_timer > 0)
+	{
+		delay_timer--;
+	}
+	if (sound_timer > 0)
+	{
+		sound_timer--;
+	}
+
+	return;
 }

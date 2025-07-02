@@ -88,7 +88,7 @@ int main(int argc, char **argv)
 				}
 				
 			}
-			if (sdl_event.type == SDL_EVENT_KEY_DOWN)
+			if (sdl_event.type == SDL_EVENT_KEY_UP)
 			{
 				for (int i = 0; i < 16; i++)
 				{
@@ -103,7 +103,7 @@ int main(int argc, char **argv)
 		// Run single CPU cycle
 		chip8.emulate_cycle();
 
-		SDL_Delay(10);
+		//SDL_Delay(1);
 
 		// Re-render if needed
 		if (chip8.render_flag)
