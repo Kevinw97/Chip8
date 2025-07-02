@@ -44,6 +44,7 @@ void Chip8::reset()
 	I = 0;
 	pc = 0x200;
 	sp = 0;
+	waiting_for_key = false;
 
 	delay_timer = 0;
 	sound_timer = 0;
@@ -75,7 +76,7 @@ int Chip8::load(const char* file_path)
 void Chip8::emulate_cycle()
 {
 	unsigned short opcode = memory[pc] << 8 | memory[pc + 1];
-	std::cout << std::hex << opcode << std::endl;
+	// std::cout << std::hex << opcode << std::endl;
 	switch (opcode & 0xF000)
 	{
 		case 0x0000:
@@ -372,20 +373,7 @@ void Chip8::emulate_cycle()
 				}
 				case 0x000A: // Fx0A - LD Vx, K
 				{
-					bool key_pressed = false;
-					for (unsigned char i = 0; i < 16; i++)
-					{
-						if (keys[i])
-						{
-							V[x] = i;
-							key_pressed = true;
-						}
-					}
-					if (!key_pressed)
-					{
-						break;
-					}
-					pc += 2;
+					waiting_for_key = x;
 					break;
 				}
 				case 0x0015: // Fx15 - LD DT, Vx
@@ -453,5 +441,16 @@ void Chip8::emulate_cycle()
 		sound_timer--;
 	}
 
+	return;
+}
+
+void Chip8::key_up_fx0a(unsigned char key)
+{
+	if (waiting_for_key != 0xFF) 
+	{
+		V[waiting_for_key] = key;
+		pc += 2;
+		waiting_for_key = 0xFF;
+	}
 	return;
 }

@@ -95,6 +95,7 @@ int main(int argc, char **argv)
 					if (sdl_event.key.key == key_map[i])
 					{
 						chip8.keys[i] = 0;
+						chip8.key_up_fx0a(i);
 					}
 				}
 			}
@@ -103,10 +104,10 @@ int main(int argc, char **argv)
 		// Run single CPU cycle
 		chip8.emulate_cycle();
 
-		//SDL_Delay(1);
+		SDL_Delay(1);
 
 		// Re-render if needed
-		if (chip8.render_flag)
+		if (true || chip8.render_flag)
 		{
 			chip8.render_flag = 0;
 
