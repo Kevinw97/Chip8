@@ -46,13 +46,13 @@ int main(int argc, char** argv)
   SDL_SetRenderDrawColor(renderer, 0, 0, 0, 255);
   SDL_RenderClear(renderer);
 
-  // Set render color to white
+  // Set render color to white, present
   SDL_SetRenderDrawColor(renderer, 255, 255, 255, 255);
-
   SDL_RenderPresent(renderer);
 
   Chip8 chip8 = Chip8();
 
+  // Set up texture for the graphics
   SDL_Texture* sdl_texture = SDL_CreateTexture(renderer,
     SDL_PIXELFORMAT_RGB332,
     SDL_TEXTUREACCESS_STREAMING,

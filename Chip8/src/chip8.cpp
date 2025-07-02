@@ -156,60 +156,60 @@ void Chip8::emulate_cycle()
   {
     switch (opcode & 0x000F)
     {
-      case 0x0000: // 8xy0 - LD Vx, Vy
-      {
-        V[x] = V[y];
-        break;
-      }
-      case 0x0001: // 8xy1 - OR Vx, Vy
-      {
-        V[x] |= V[y];
-        break;
-      }
-      case 0x0002: // 8xy2 - AND Vx, Vy
-      {
-        V[x] &= V[y];
-        break;
-      }
-      case 0x0003: // 8xy3 - XOR Vx, Vy
-      {
-        V[x] ^= V[y];
-        break;
-      }
-      case 0x0004: // 8xy4 - ADD Vx, Vy
-      {
-        V[x] += V[y];
-        V[0xF] = (V[x] < V[y]) ? 1 : 0; // Set V[0xF] if overflow occurred
-        break;
-      }
-      case 0x0005: // 8xy5 - SUB Vx, Vy
-      {
-        bool carry = V[x] >= V[y];
-        V[x] -= V[y];
-        V[0xF] = carry;
-        break;
-      }
-      case 0x0006: // 8xy6 - SHR Vx {, Vy}
-      {
-        bool carry = V[x] & 0x0001;
-        V[x] >>= 1;
-        V[0xF] = carry;
-        break;
-      }
-      case 0x0007: // 8xy7 - SUBN Vx, Vy
-      {
-        bool carry = V[y] >= V[x];
-        V[x] = V[y] - V[x];
-        V[0xF] = carry;
-        break;
-      }
-      case 0x000E: // 8xyE - SHL Vx {, Vy}
-      {
-        unsigned char carry = (V[x] & 0x80) >> 7;
-        V[x] <<= 1;
-        V[0xF] = carry;
-        break;
-      }
+    case 0x0000: // 8xy0 - LD Vx, Vy
+    {
+      V[x] = V[y];
+      break;
+    }
+    case 0x0001: // 8xy1 - OR Vx, Vy
+    {
+      V[x] |= V[y];
+      break;
+    }
+    case 0x0002: // 8xy2 - AND Vx, Vy
+    {
+      V[x] &= V[y];
+      break;
+    }
+    case 0x0003: // 8xy3 - XOR Vx, Vy
+    {
+      V[x] ^= V[y];
+      break;
+    }
+    case 0x0004: // 8xy4 - ADD Vx, Vy
+    {
+      V[x] += V[y];
+      V[0xF] = (V[x] < V[y]) ? 1 : 0; // Set V[0xF] if overflow occurred
+      break;
+    }
+    case 0x0005: // 8xy5 - SUB Vx, Vy
+    {
+      bool carry = V[x] >= V[y];
+      V[x] -= V[y];
+      V[0xF] = carry;
+      break;
+    }
+    case 0x0006: // 8xy6 - SHR Vx {, Vy}
+    {
+      bool carry = V[x] & 0x0001;
+      V[x] >>= 1;
+      V[0xF] = carry;
+      break;
+    }
+    case 0x0007: // 8xy7 - SUBN Vx, Vy
+    {
+      bool carry = V[y] >= V[x];
+      V[x] = V[y] - V[x];
+      V[0xF] = carry;
+      break;
+    }
+    case 0x000E: // 8xyE - SHL Vx {, Vy}
+    {
+      unsigned char carry = (V[x] & 0x80) >> 7;
+      V[x] <<= 1;
+      V[0xF] = carry;
+      break;
+    }
     }
     break;
   }
