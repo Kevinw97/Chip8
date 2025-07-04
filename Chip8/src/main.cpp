@@ -3,6 +3,7 @@
 #include <chrono>
 
 #include "chip8.hpp"
+#include "audio.hpp"
 
 using namespace std;
 
@@ -70,6 +71,8 @@ int main(int argc, char** argv)
   auto display_clock_begin = chrono::steady_clock::now();
   auto cpu_clock_begin = chrono::steady_clock::now();
 
+  Chip8Audio chip8_audio = Chip8Audio();
+
   while (true)
   {
     // Process key events
@@ -86,17 +89,18 @@ int main(int argc, char** argv)
           chip8.load(argv[1]);
           break;
         }
-        for (int i = 0; i < 16; i++)
+        for (int i = 0; i < 16; ++i)
         {
           if (sdl_event.key.key == key_map[i])
           {
+            chip8_audio.PlayBeep();
             chip8.keys[i] = 1;
           }
         }
       }
       if (sdl_event.type == SDL_EVENT_KEY_UP)
       {
-        for (int i = 0; i < 16; i++)
+        for (int i = 0; i < 16; ++i)
         {
           if (sdl_event.key.key == key_map[i])
           {

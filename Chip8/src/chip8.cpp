@@ -304,7 +304,7 @@ void Chip8::emulate_cycle()
       static unsigned char key = 0xFF;
       if (!key_pressed)
       {
-        for (int i = 0; i < 16; i++)
+        for (int i = 0; i < 16; ++i)
         {
           if (keys[i]) // Key is held down, save it, and wait until it is released
           {
@@ -355,19 +355,17 @@ void Chip8::emulate_cycle()
     }
     case 0x0055: // Fx55 - LD [I], Vx
     {
-      for (unsigned char i = 0; i <= x; i++)
+      for (unsigned char i = 0; i <= x; ++i)
       {
-        memory[I] = V[i];
-        I++;
+        memory[I++] = V[i];
       }
       break;
     }
     case 0x0065: // Fx65 - LD Vx, [I]
     {
-      for (unsigned char i = 0; i <= x; i++)
+      for (unsigned char i = 0; i <= x; ++i)
       {
-        V[i] = memory[I];
-        I++;
+        V[i] = memory[I++];
       }
       break;
     }
