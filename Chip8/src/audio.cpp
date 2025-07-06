@@ -18,10 +18,10 @@ Chip8Audio::Chip8Audio()
 
 void Chip8Audio::PlayBeep()
 {
-  static int samples[4096];
+  static int samples[1024];
 
   int current_sample_index = 0;
-  for (int i = 0; i < SDL_arraysize(samples); ++i) // 
+  for (int i = 0; i < SDL_arraysize(samples); ++i)
   {
     int samples_per_wave = 44100 / frequency; // Samples/Time divided by Waves/Time gives us Samples/Wave, essentially telling us how many samples are in each wave.
     int half_samples_per_wave = samples_per_wave / 2;

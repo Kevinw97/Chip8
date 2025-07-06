@@ -373,14 +373,34 @@ void Chip8::emulate_cycle()
     break;
   }
   }
+  return;
+}
+
+
+/*
+Updates the delay and sound timer, should be called at a 60 Hz rate
+Returns error code indicating which timer is nonzero.
+*/
+int Chip8::tick_timers()
+{
+  int ret = CHIP8_ALL_TIMERS_ZERO;
+
   if (delay_timer > 0)
   {
-    delay_timer--;
+    --delay_timer;
+    if (delay_timer)
+    {
+      ret |= CHIP8_DELAY_TIMER_NONZERO;
+    }
   }
   if (sound_timer > 0)
   {
-    sound_timer--;
+    --sound_timer;
+    if (sound_timer)
+    {
+      ret |= CHIP8_SOUND_TIMER_NONZERO;
+    }
   }
 
-  return;
+  return ret;
 }

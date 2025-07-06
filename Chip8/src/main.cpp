@@ -118,7 +118,7 @@ int main(int argc, char** argv)
       chip8.emulate_cycle();
     }
     
-    // Re-render display at display rate
+    // Re-render display at 60 Hz, update timers at 60 Hz
     auto display_clock_end = chrono::steady_clock::now();
     if (display_clock_end - display_clock_begin >= display_rate)
     {
@@ -126,6 +126,11 @@ int main(int argc, char** argv)
       if (chip8.render_flag)
       {
         chip8.render_flag = 0;
+      }
+
+      if (chip8.tick_timers() & CHIP8_SOUND_TIMER_NONZERO)
+      {
+        chip8_audio.PlayBeep();
       }
 
       SDL_UpdateTexture(sdl_texture, NULL, chip8.graphics, 64);

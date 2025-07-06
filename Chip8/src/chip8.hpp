@@ -1,6 +1,10 @@
 #ifndef CHIP8_H
 #define CHIP8_H
 
+#define CHIP8_SOUND_TIMER_NONZERO 0x1
+#define CHIP8_DELAY_TIMER_NONZERO 0x2
+#define CHIP8_ALL_TIMERS_ZERO 0x0
+
 class Chip8
 {
   unsigned char memory[4096];
@@ -28,6 +32,7 @@ public:
 
   int load(const char* file_path);
   void emulate_cycle();
+  int tick_timers();
 
 };
 
