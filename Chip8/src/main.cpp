@@ -93,7 +93,6 @@ int main(int argc, char** argv)
         {
           if (sdl_event.key.key == key_map[i])
           {
-            chip8_audio.PlayBeep();
             chip8.keys[i] = 1;
           }
         }
