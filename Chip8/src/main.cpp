@@ -5,8 +5,6 @@
 #include "chip8.hpp"
 #include "audio.hpp"
 
-using namespace std;
-
 unsigned char key_map[16] = {
   SDLK_X, // 0
   SDLK_1, // 1
@@ -29,8 +27,9 @@ unsigned char key_map[16] = {
 int main(int argc, char** argv)
 {
   // Command usage, should take ROM file name
-  if (argc != 2) {
-    cout << "Usage: Chip8 <ROM file>" << endl;
+  if (argc != 2) 
+  {
+    std::cout << "Usage: Chip8 <ROM file>" << std::endl;
     return 1;
   }
 
@@ -51,8 +50,6 @@ int main(int argc, char** argv)
   SDL_SetRenderDrawColor(renderer, 255, 255, 255, 255);
   SDL_RenderPresent(renderer);
 
-  Chip8 chip8 = Chip8();
-
   // Set up texture for the graphics
   SDL_Texture* sdl_texture = SDL_CreateTexture(renderer,
     SDL_PIXELFORMAT_RGB332,
@@ -61,17 +58,19 @@ int main(int argc, char** argv)
     32);
   SDL_SetTextureScaleMode(sdl_texture, SDL_SCALEMODE_NEAREST);
 
-  SDL_Event sdl_event;
+  Chip8 chip8 = Chip8::get();
 
   chip8.load(argv[1]);
 
-  static const auto cpu_rate = chrono::nanoseconds{ 1000000000 / 540 };
-  static const auto display_rate = chrono::nanoseconds{ 1000000000 / 60 };
+  static const auto cpu_rate = std::chrono::nanoseconds{ 1000000000 / 540 };
+  static const auto display_rate = std::chrono::nanoseconds{ 1000000000 / 60 };
 
-  auto display_clock_begin = chrono::steady_clock::now();
-  auto cpu_clock_begin = chrono::steady_clock::now();
+  auto display_clock_begin = std::chrono::steady_clock::now();
+  auto cpu_clock_begin = std::chrono::steady_clock::now();
 
-  Chip8Audio chip8_audio = Chip8Audio();
+  Chip8Audio chip8_audio = Chip8Audio::get();
+
+  SDL_Event sdl_event;
 
   while (true)
   {
@@ -110,7 +109,7 @@ int main(int argc, char** argv)
     }
 
     // Run single CPU cycle at CPU rate
-    auto cpu_clock_end = chrono::steady_clock::now();
+    auto cpu_clock_end = std::chrono::steady_clock::now();
     if (cpu_clock_end - cpu_clock_begin >= cpu_rate)
     {
       cpu_clock_begin = cpu_clock_end;
@@ -118,7 +117,7 @@ int main(int argc, char** argv)
     }
     
     // Re-render display at 60 Hz, update timers at 60 Hz
-    auto display_clock_end = chrono::steady_clock::now();
+    auto display_clock_end = std::chrono::steady_clock::now();
     if (display_clock_end - display_clock_begin >= display_rate)
     {
       display_clock_begin = display_clock_end;
@@ -132,7 +131,7 @@ int main(int argc, char** argv)
         chip8_audio.PlayBeep();
       }
 
-      SDL_UpdateTexture(sdl_texture, NULL, chip8.graphics, 64);
+      SDL_UpdateTexture(sdl_texture, NULL, chip8.graphics.data(), 64);
       SDL_RenderTexture(renderer, sdl_texture, NULL, NULL);
       SDL_RenderPresent(renderer);
     }

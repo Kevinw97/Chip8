@@ -3,17 +3,18 @@
 
 class Chip8Audio
 {
-  SDL_AudioStream* stream;
-
-public:
-  int volume;
-  int frequency;
+private:
+  static SDL_AudioStream* stream;
 
   Chip8Audio();
-  ~Chip8Audio();
+
+  static int volume;
+  static int frequency;
+
+public:
+  static Chip8Audio& get();
 
   void PlayBeep();
-
 };
 
-#endif // CHIP8_H
+#endif // CHIP8_AUDIO_H
